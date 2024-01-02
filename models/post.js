@@ -1,5 +1,5 @@
-const db = require("../db")
-const { BadRequestError, NotFoundError } = require("../utils/errors")
+const db = require("../db");
+const { BadRequestError, NotFoundError } = require("../utils/errors");
 
 class Post {
   static async listPosts() {
@@ -12,7 +12,7 @@ class Post {
              p.caption,
              p.image_url AS "imageUrl",
              p.user_id AS "userId",
-             u.email AS "userEmail",
+             u.username AS "username",
              AVG(r.rating) AS "rating",
              COUNT(r.rating) AS "totalRatings",
              p.created_at AS "createdAt",
@@ -20,11 +20,11 @@ class Post {
       FROM posts AS p
         LEFT JOIN users AS u ON u.id = p.user_id
         LEFT JOIN ratings AS r ON r.post_id = p.id
-      GROUP BY p.id, u.email
+      GROUP BY p.id, u.username
       ORDER BY p.created_at DESC
-    `)
+    `);
 
-    return results.rows
+    return results.rows;
   }
 
   static async fetchPostById(postId) {
@@ -39,65 +39,69 @@ class Post {
              p.user_id AS "userId",
              AVG(r.rating) AS "rating",
              COUNT(r.rating) AS "totalRatings",
-             u.email AS "userEmail",             
+             u.username AS "username",             
              p.created_at AS "createdAt",
              p.updated_at AS "updatedAt"
       FROM posts AS p
         LEFT JOIN ratings AS r ON r.post_id = p.id
         LEFT JOIN users AS u ON u.id = p.user_id        
       WHERE p.id = $1
-      GROUP BY p.id, u.email
+      GROUP BY p.id, u.username
     `,
       [postId]
-    )
+    );
 
-    const post = results.rows[0]
+    const post = results.rows[0];
 
     if (!post) {
-      throw new NotFoundError("Post not found.")
+      throw new NotFoundError("Post not found.");
     }
 
-    return post
+    return post;
   }
 
   static async createNewPost({ post, user }) {
-    const requiredFields = ["caption", "imageUrl"]
+    const requiredFields = ["caption", "imageUrl"];
     requiredFields.forEach((field) => {
       if (!post.hasOwnProperty(field) || !post[field]) {
-        throw new BadRequestError(`Required field - ${field} - missing from request body.`)
+        throw new BadRequestError(
+          `Required field - ${field} - missing from request body.`
+        );
       }
-    })
+    });
 
     if (post.caption.length > 140) {
-      throw new BadRequestError(`Post caption must be 140 characters or less.`)
+      throw new BadRequestError(`Post caption must be 140 characters or less.`);
     }
 
     // insert a new post into the database
     const results = await db.query(
       `
       INSERT INTO posts (caption, image_url, user_id)
-      VALUES ($1, $2, (SELECT id FROM users WHERE email = $3))
+      VALUES ($1, $2, (SELECT id FROM users WHERE username = $3))
       RETURNING id, 
                 caption, 
                 image_url AS "imageUrl",
                 user_id AS "userId",
-                $3 AS "userEmail",
+                $3 AS "username",
                 created_at AS "createdAt",
                 updated_at AS "updatedAt"
     `,
-      [post.caption, post.imageUrl, user.email]
-    )
+      [post.caption, post.imageUrl, user.username]
+    );
 
-    return results.rows[0]
+    return results.rows[0];
   }
 
   static async editPost({ postUpdate, postId }) {
-    const requiredFields = ["caption"]
+    const requiredFields = ["caption"];
     requiredFields.forEach((field) => {
       if (!postUpdate.hasOwnProperty(field)) {
-        throw new BadRequestError(`Required field - ${field} - missing from request body.`)
+        throw new BadRequestError(
+          `Required field - ${field} - missing from request body.`
+        );
       }
-    })
+    });
 
     // update a single post
     const result = await db.query(
@@ -114,10 +118,10 @@ class Post {
                 updated_at AS "updatedAt"
     `,
       [postUpdate.caption, postId]
-    )
+    );
 
-    return result.rows[0]
+    return result.rows[0];
   }
 }
 
-module.exports = Post
+module.exports = Post;

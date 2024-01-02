@@ -63,7 +63,3 @@ describe("User", () => {
     });
   });
 });
-
-afterAll(async () => {
-  await db.end();
-});
