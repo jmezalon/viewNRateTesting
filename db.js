@@ -1,15 +1,27 @@
-const { Client } = require("pg")
-const { getDatabaseUri } = require("./config")
-require("colors")
+const { Client } = require("pg");
+const fs = require("fs");
+const path = require("path");
+const { getDatabaseUri } = require("./config");
+require("colors");
 
-const db = new Client({ connectionString: getDatabaseUri() })
+const db = new Client({ connectionString: getDatabaseUri() });
 
-db.connect((err) => {
-  if (err) {
-    console.error("connection error", err.stack)
-  } else {
-    console.log("Successfully connected to postgres database!".blue)
+const loadSchema = async () => {
+  const schemaPath = path.join(__dirname, "rate-my-setup-advance-schema.sql");
+  const schemaSql = fs.readFileSync(schemaPath, "utf8");
+  await db.query(schemaSql);
+};
+
+const connectWithSchema = async () => {
+  try {
+    await db.connect();
+    console.log("Successfully connected to postgres database!".blue);
+    await loadSchema();
+  } catch (err) {
+    console.error("connection error", err.stack);
   }
-})
+};
 
-module.exports = db
+connectWithSchema();
+
+module.exports = db;
