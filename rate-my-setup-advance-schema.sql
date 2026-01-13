@@ -1,4 +1,4 @@
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
   id          SERIAL PRIMARY KEY,
   password    TEXT NOT NULL,
   username    TEXT NOT NULL UNIQUE,
@@ -7,7 +7,7 @@ CREATE TABLE users (
   created_at  TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE posts (
+CREATE TABLE IF NOT EXISTS posts (
   id          SERIAL PRIMARY KEY,
   caption     VARCHAR(140) NOT NULL,
   image_url   TEXT NOT NULL,
@@ -17,11 +17,10 @@ CREATE TABLE posts (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE ratings (
+CREATE TABLE IF NOT EXISTS ratings (
   rating      INTEGER NOT NULL CHECK (rating > 0 AND rating <= 10),
   post_id     INTEGER NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
   user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   created_at  TIMESTAMP NOT NULL DEFAULT NOW(),  
   PRIMARY KEY (post_id, user_id)
 );
-
